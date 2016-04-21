@@ -3,7 +3,7 @@ import numpy.linalg as linalg
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-maxIter = 100 # Total number of time iterations.
+maxIter = 1000 # Total number of time iterations.
 Re      = 0.1  # Reynolds number.
 nx = 500
 ny = 200
@@ -63,8 +63,8 @@ for t in range(maxIter):
 
     rho = np.sum(f_i, axis=2)
 
-    ux = np.divide((np.sum(f_i[:,:,[1, 5, 8]], axis=2) - np.sum(f_i[:,:,[3, 6, 7]], axis=2)), rho)
-    uy = np.divide((np.sum(f_i[:,:,[2, 5, 6]], axis=2) - np.sum(f_i[:,:,[4, 7, 8]], axis=2)), rho)
+    ux = (np.sum(f_i[:,:,[1, 5, 8]], axis=2) - np.sum(f_i[:,:,[3, 6, 7]], axis=2)) / rho
+    uy = (np.sum(f_i[:,:,[2, 5, 6]], axis=2) - np.sum(f_i[:,:,[4, 7, 8]], axis=2)) / rho
 
     ux[boundary] = 0
     uy[boundary] = 0
@@ -76,15 +76,22 @@ for t in range(maxIter):
     minuxminuy = -uxplusuy
     plusuxminuy = -minuxplusuy
 
+    minuxplusuy2c2 = np.power(minuxplusuy, 2)
+    plusuxminuy2c2 = minuxplusuy2c2
+    uxplusuy2c2 = np.power(uxplusuy, 2)
+    minuxminuy2c2 = uxplusuy2c2
+    ux2c2 = np.power(ux/c_sqrd,2)
+    uy2c2 = np.power(uy/c_sqrd,2)
+
     f_eq[:,:,0]=w_i[0]*rho * (1 -u_sqrd/(2*c_sqrd))
-    f_eq[:,:,1]=w_i[1]*rho * (1+ux/c_sqrd+0.5*np.power(ux/c_sqrd,2)-u_sqrd/(2*c_sqrd))
-    f_eq[:,:,2]=w_i[2]*rho * (1+uy/c_sqrd+0.5*np.power(uy/c_sqrd,2)-u_sqrd/(2*c_sqrd))
-    f_eq[:,:,3]=w_i[3]*rho * (1-ux/c_sqrd+0.5*np.power(ux/c_sqrd,2)-u_sqrd/(2*c_sqrd))
-    f_eq[:,:,4]=w_i[4]*rho * (1-uy/c_sqrd+0.5*np.power(uy/c_sqrd,2)-u_sqrd/(2*c_sqrd))
-    f_eq[:,:,5]=w_i[5]*rho * (1+uxplusuy/c_sqrd+0.5*np.power(uxplusuy/c_sqrd,2)-u_sqrd/(2*c_sqrd))
-    f_eq[:,:,6]=w_i[6]*rho * (1+minuxplusuy/c_sqrd+0.5*np.power(minuxplusuy/c_sqrd,2)-u_sqrd/(2*c_sqrd))
-    f_eq[:,:,7]=w_i[7]*rho * (1+minuxminuy/c_sqrd+0.5*np.power(minuxminuy/c_sqrd,2)-u_sqrd/(2*c_sqrd))
-    f_eq[:,:,8]=w_i[8]*rho * (1+plusuxminuy/c_sqrd+0.5*np.power(plusuxminuy/c_sqrd,2)-u_sqrd/(2*c_sqrd))
+    f_eq[:,:,1]=w_i[1]*rho * (1+ux/c_sqrd+0.5*ux2c2-u_sqrd/(2*c_sqrd))
+    f_eq[:,:,2]=w_i[2]*rho * (1+uy/c_sqrd+0.5*uy2c2-u_sqrd/(2*c_sqrd))
+    f_eq[:,:,3]=w_i[3]*rho * (1-ux/c_sqrd+0.5*ux2c2-u_sqrd/(2*c_sqrd))
+    f_eq[:,:,4]=w_i[4]*rho * (1-uy/c_sqrd+0.5*uy2c2-u_sqrd/(2*c_sqrd))
+    f_eq[:,:,5]=w_i[5]*rho * (1+uxplusuy/c_sqrd+0.5*uxplusuy2c2-u_sqrd/(2*c_sqrd))
+    f_eq[:,:,6]=w_i[6]*rho * (1+minuxplusuy/c_sqrd+0.5*minuxplusuy2c2-u_sqrd/(2*c_sqrd))
+    f_eq[:,:,7]=w_i[7]*rho * (1+minuxminuy/c_sqrd+0.5*minuxminuy2c2-u_sqrd/(2*c_sqrd))
+    f_eq[:,:,8]=w_i[8]*rho * (1+plusuxminuy/c_sqrd+0.5*plusuxminuy2c2-u_sqrd/(2*c_sqrd))
 
 
     f_out = f_i - (f_i - f_eq)/tau
