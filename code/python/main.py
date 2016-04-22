@@ -3,8 +3,8 @@ import numpy.linalg as linalg
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-maxIter = 1000
-Re = 1
+maxIter = 100000
+Re = 100
 nx = 500
 ny = 150
 q = 9
@@ -64,7 +64,7 @@ def poiseuille_flow_channel(max_x, max_y, u_max):
 def poiseulle_flow_boundary(max_y, u_max):
     ux = np.zeros((max_y))
     for y in range(max_y):
-        ux[y] = u_max * (1 - np.abs(1 - (2*y/max_y) ** 2))
+        ux[y] = (u_max / (ny /2 ) ** 2) * (1 - (np.abs(y-ny/2) / (ny / 2)) ** 2)
     return ux
 
 boundary = set_boundary(nx, ny, obstacle_x, obstacle_y, obstacle_r)
@@ -78,18 +78,30 @@ ux[boundary] = 0
 uy[boundary] = 0
 f_i = equilibrium(rho, ux, uy)
 f_eq = np.copy(f_i)
+f_out = np.copy(f_i)
+
+p_flow_bdry = poiseulle_flow_boundary(ny, uLB)
+p_flow_channel = poiseuille_flow_channel(nx, ny, uLB)
 
 
 for t in range(maxIter):
-    f_out = f_i - (f_i - f_eq) / tau
-
-    for i in range(q):
-        f_out[boundary, i] = f_i[boundary, opp[i]]
-
     for i in range(q):
         f_i[:, :, i] = np.roll(np.roll(f_out[:, :, i], cx[i], axis=0), cy[i], axis=1)
+    f_i[0] = f_i[1] # Taking away periodic boundary conditions on the inflow
+    f_i[-1] = f_i[-2] # And also at the outflow
+
+    for i in range(q):
+        f_i[boundary, i] = f_i[boundary, opp[i]]
+
+    ux[0,:] = p_flow_bdry
+    for i in range(nx):
+        ux[i,not_boundary[i,:]] += 1.0 * ux[0, not_boundary[i,:]]
 
     rho = np.sum(f_i, axis=2)
+    f_eq = equilibrium(rho, ux, uy)
+    f_out = f_i - (f_i - f_eq) / tau
+
+
 
     ux = (np.sum(f_i[:, :, [1, 5, 8]], axis=2) - np.sum(f_i[:, :, [3, 6, 7]], axis=2)) / rho
     uy = (np.sum(f_i[:, :, [2, 5, 6]], axis=2) - np.sum(f_i[:, :, [4, 7, 8]], axis=2)) / rho
@@ -99,7 +111,7 @@ for t in range(maxIter):
     if (t % 50 == 0):
         plt.clf();
         plt.imshow((ux).transpose(), cmap=cm.Blues)
-        plt.clim(0,uLB)
+        # plt.clim(0,uLB)
         plt.colorbar()
         plt.savefig("velx/" + str(t / 100).zfill(4) + ".png")
         plt.clf();
@@ -108,12 +120,9 @@ for t in range(maxIter):
         plt.savefig("vely/" + str(t / 100).zfill(4) + ".png")
         plt.clf();
         plt.imshow((np.sqrt(ux ** 2 + uy ** 2)).transpose(), cmap=cm.Blues)
-        plt.clim(0,uLB)
+        # plt.clim(0,uLB)
         plt.colorbar()
         plt.savefig("vel/" + str(t / 100).zfill(4) + ".png")
 
-    ux[0,:] = poiseulle_flow_boundary(ny, uLB)
-    for i in range(nx):
-        ux[i,not_boundary[i,:]] += 0.0001 * ux[0, not_boundary[i,:]]
-    f_eq = equilibrium(rho, ux, uy)
+
 
