@@ -67,17 +67,11 @@ def poiseuille_flow_channel(max_x, max_y, u_max):
         ux[:,y] = (u_max / (max_y /2 ) ** 2) * (1 - (np.abs(y-max_y/2) / (max_y / 2)) ** 2)
     return ux, uy
 
-def poiseulle_flow_inlet(max_y, u_max):
-    ux = np.zeros((max_y))
-    for y in range(max_y):
-        ux[y] = (u_max / (max_y /2 ) ** 2) * (1 - (np.abs(y-max_y/2) / (max_y / 2)) ** 2)
-    return ux
 
 # Initialize the boundary once. The boundary depends on the box's dimensions and the object being placed
 boundary = set_boundary(nx, ny, obstacle_x, obstacle_y, obstacle_r, cylinder)
 
 # Initialize the poiseulle flow velocity profile once to reference later
-p_flow_bdry = poiseulle_flow_inlet(ny, uLB)
 p_flow_channel_x, p_flow_channel_y = poiseuille_flow_channel(nx, ny, uLB)
 
 # Conditions to start the simulation with:
@@ -104,7 +98,7 @@ for t in range(maxIter):
     uy = (np.sum(f_i[:, :, [2, 5, 6]], axis=2) - np.sum(f_i[:, :, [4, 7, 8]], axis=2)) / rho
 
     # Increment velocities in x-direction to mimic a constant pressure drop
-    ux += 0.7 * p_flow_channel_x
+    ux += 0.7 * uLB
 
     # Calculate the equilibrium distribution based on the density and velocities
     f_eq = equilibrium(rho, nx, ny, q, ux, uy, e_i)
