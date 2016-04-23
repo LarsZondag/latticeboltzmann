@@ -15,6 +15,7 @@ obstacle_y = ny / 2
 obstacle_r = ny / 9
 nulb = uLB * obstacle_r / Re
 tau = (3. * nulb + 0.5)
+cylinder = True
 
 # e_i gives the directions of all 9 velocity vectors.
 # opp gives the indices that correspond to the index of e_i containing the opposite velocity vector
@@ -29,10 +30,6 @@ e_i[5] = [ 1,  1];      opp[5] = 7
 e_i[6] = [-1,  1];      opp[6] = 8
 e_i[7] = [-1, -1];      opp[7] = 5
 e_i[8] = [ 1, -1];      opp[8] = 6
-# e_i = np.array([[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [-1, -1], [1, -1]])
-# cx = np.array([0, 1, 0, -1, 0, 1, -1, -1, 1])
-# cy = np.array([0, 0, 1, 0, -1, 1, 1, -1, -1])
-# opp = np.array([0, 3, 4, 1, 2, 7, 8, 5, 6])
 w_i = np.array([4 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 36, 1 / 36, 1 / 36, 1 / 36])
 
 
@@ -53,11 +50,12 @@ def equilibrium(rho, max_x, max_y, directions, velo_x, velo_y, c):  # Equilibriu
 
     return feq
 
-def set_boundary(max_x, max_y, obst_x, obst_y, obst_r):
+def set_boundary(max_x, max_y, obst_x, obst_y, obst_r, cylinder):
     b = np.zeros((max_x, max_y))
-    for i in range(max_x):
-        for j in range(max_y):
-            b[i, j] = (i - obst_x) ** 2 + (j - obst_y) ** 2 <= obst_r ** 2
+    if cylinder:
+        for i in range(max_x):
+            for j in range(max_y):
+                b[i, j] = (i - obst_x) ** 2 + (j - obst_y) ** 2 <= obst_r ** 2
     b[:, 0] = True
     b[:, -1] = True
     return b == 1
@@ -76,8 +74,7 @@ def poiseulle_flow_boundary(max_y, u_max):
     return ux
 
 # Initialize the boundary once. The boundary depends on the box's dimensions and the object being placed
-boundary = set_boundary(nx, ny, obstacle_x, obstacle_y, obstacle_r)
-not_boundary = boundary == False
+boundary = set_boundary(nx, ny, obstacle_x, obstacle_y, obstacle_r, cylinder)
 
 # Initialize the poiseulle flow velocity profile once to reference later
 p_flow_bdry = poiseulle_flow_boundary(ny, uLB)
@@ -125,17 +122,17 @@ for t in range(maxIter):
 
     # Make images of velocity in the x and y direction and of the speed
     if (t % 100 == 0):
-        plt.clf();
+        plt.clf()
         plt.imshow(ux.transpose(), cmap=cm.Blues)
         plt.colorbar()
         plt.savefig("velx/" + str(t / 100) + ".png")
 
-        plt.clf();
+        plt.clf()
         plt.imshow(uy.transpose(), cmap=cm.Blues)
         plt.colorbar()
         plt.savefig("vely/" + str(t / 100) + ".png")
 
-        plt.clf();
+        plt.clf()
         plt.imshow((np.sqrt(ux ** 2 + uy ** 2)).transpose(), cmap=cm.Blues)
         plt.colorbar()
         plt.savefig("vel/" + str(t / 100) + ".png")
