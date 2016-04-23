@@ -1,5 +1,7 @@
 # D2Q9 Lattice Boltzmann
 
+The script can be found at `code/python/main.py`.
+
 In this script a D2Q9 Lattice Boltzmann simulation is run. The standard gemeomtry is that of a pipe. The parameter `cylinder` can be switched from `True` to `False` to place a cylinderical object in the flow or not. The results of the flow will be saved in the folders `vel`, `velx`, `vely`, and `profile` for the norm of the velocity, the x-velocity, the y-velocity, and the vertical velocity profile at the middle of the grid.
 
 # Results 
