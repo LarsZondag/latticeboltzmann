@@ -7,16 +7,16 @@ from numba import jit
 # Flow constants
 maxIter = 100000        # amount of cycles
 Re = 220                # Reynolds number
-nx = 520
-ny = 180
+lx = 700                # Lattice points in x-direction
+ly = 200                # Lattice points in y-direction
 q = 9                   # number of possible directions
-uLB = 0.04              # maximum velocity of Poiseuille flow
-obstacle_x = nx / 4     # x location of the cylinder
-obstacle_y = ny / 2     # y location of the cylinder
-obstacle_r = ny / 9     # radius of the cylinder
-nulb = uLB * obstacle_r / Re    # kinematic viscosity
+U = 0.04              # maximum velocity of Poiseuille flow
+obstacle_x = lx / 4     # x location of the cylinder
+obstacle_y = ly / 2     # y location of the cylinder
+obstacle_r = ly / 9     # radius of the cylinder
+nulb = U * obstacle_r / Re    # kinematic viscosity
 tau = (3. * nulb + 0.5) # relaxation parameter
-cylinder = True
+cylinder = False
 
 # D2Q9 Lattice constants
 # e_i gives the directions of all 9 velocity vectors.
@@ -73,10 +73,10 @@ def poiseuille_flow_channel(max_x, max_y, u_max):
 
 
 # Initialize the boundary once. The boundary depends on the box's dimensions and the object being placed
-boundary = set_boundary(nx, ny, obstacle_x, obstacle_y, obstacle_r, cylinder)
+boundary = set_boundary(lx, ly, obstacle_x, obstacle_y, obstacle_r, cylinder)
 
 # Initialize the poiseulle flow velocity profile once to reference later
-p_flow_channel_x, p_flow_channel_y = poiseuille_flow_channel(nx, ny, uLB)
+p_flow_channel_x, p_flow_channel_y = poiseuille_flow_channel(lx, ly, U)
 
 # Conditions to start the simulation with:
 # Starting velocity profile can be set here. We chose a poiseulle flow profile
@@ -86,10 +86,10 @@ uy = p_flow_channel_y
 # Make sure there is not flow on the boundary
 ux[boundary] = 0
 uy[boundary] = 0
-rho = np.ones((nx, ny))
+rho = np.ones((lx, ly))
 
 # The velocity profile is incorporated into the equilibrium distribution.
-f_i = equilibrium(rho, nx, ny, q, ux, uy, e_i)
+f_i = equilibrium(rho, lx, ly, q, ux, uy, e_i)
 f_eq = np.copy(f_i)
 
 ## Main loop ##
@@ -103,10 +103,10 @@ for t in range(maxIter):
     uy = (np.sum(f_i[:, :, [2, 5, 6]], axis=2) - np.sum(f_i[:, :, [4, 7, 8]], axis=2)) / rho
 
     # Increment velocities in x-direction to mimic a constant pressure drop
-    ux += 0.7 * uLB
+    ux += 0.001 * U
 
     # Calculate the equilibrium distribution based on the density and velocities
-    f_eq = equilibrium(rho, nx, ny, q, ux, uy, e_i)
+    f_eq = equilibrium(rho, lx, ly, q, ux, uy, e_i)
 
     # Collision / relaxation step
     f_out = f_i - (f_i - f_eq) / tau
@@ -135,6 +135,11 @@ for t in range(maxIter):
         plt.imshow((np.sqrt(ux ** 2 + uy ** 2)).transpose(), cmap=cm.Blues)
         plt.colorbar()
         plt.savefig("vel/" + str(t / 100) + ".png")
+        
+        if cylinder == False:
+            plt.clf()
+            plt.plot(ux[round(ly / 2)] / np.max(ux[round(ly / 2)]), np.arange(ly))
+            plt.savefig("profile/" + str(t / 100) + ".png")
 
 
 
