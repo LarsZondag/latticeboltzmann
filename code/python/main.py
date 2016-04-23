@@ -98,6 +98,9 @@ for t in range(maxIter):
 
     # Calculate density and velocities
     rho = np.sum(f_i, axis=2)
+    # When calculating the x-velocity, only the 1, 5, and 8 indices represent velocities in the positive x-direction.
+    # Indices 3, 6, and 7 represent velocities in the negative x-direction. For the y-velocity a similar approach is
+    # valid where 2, 5, and 6 are in the positive y-direction and 4, 7, and 8 are in the negative direction.
     ux = (np.sum(f_i[:, :, [1, 5, 8]], axis=2) - np.sum(f_i[:, :, [3, 6, 7]], axis=2)) / rho
     uy = (np.sum(f_i[:, :, [2, 5, 6]], axis=2) - np.sum(f_i[:, :, [4, 7, 8]], axis=2)) / rho
 
