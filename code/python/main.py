@@ -67,7 +67,7 @@ def poiseuille_flow_channel(max_x, max_y, u_max):
         ux[:,y] = (u_max / (max_y /2 ) ** 2) * (1 - (np.abs(y-max_y/2) / (max_y / 2)) ** 2)
     return ux, uy
 
-def poiseulle_flow_boundary(max_y, u_max):
+def poiseulle_flow_inlet(max_y, u_max):
     ux = np.zeros((max_y))
     for y in range(max_y):
         ux[y] = (u_max / (max_y /2 ) ** 2) * (1 - (np.abs(y-max_y/2) / (max_y / 2)) ** 2)
@@ -77,7 +77,7 @@ def poiseulle_flow_boundary(max_y, u_max):
 boundary = set_boundary(nx, ny, obstacle_x, obstacle_y, obstacle_r, cylinder)
 
 # Initialize the poiseulle flow velocity profile once to reference later
-p_flow_bdry = poiseulle_flow_boundary(ny, uLB)
+p_flow_bdry = poiseulle_flow_inlet(ny, uLB)
 p_flow_channel_x, p_flow_channel_y = poiseuille_flow_channel(nx, ny, uLB)
 
 # Conditions to start the simulation with:
