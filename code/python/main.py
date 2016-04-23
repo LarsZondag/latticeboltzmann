@@ -4,19 +4,21 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from numba import jit
 
-maxIter = 100000
-Re = 220
+# Flow constants
+maxIter = 100000        # amount of cycles
+Re = 220                # Reynolds number
 nx = 520
 ny = 180
-q = 9
-uLB = 0.04
-obstacle_x = nx / 4
-obstacle_y = ny / 2
-obstacle_r = ny / 9
-nulb = uLB * obstacle_r / Re
-tau = (3. * nulb + 0.5)
+q = 9                   # number of possible directions
+uLB = 0.04              # maximum velocity of Poiseuille flow
+obstacle_x = nx / 4     # x location of the cylinder
+obstacle_y = ny / 2     # y location of the cylinder
+obstacle_r = ny / 9     # radius of the cylinder
+nulb = uLB * obstacle_r / Re    # kinematic viscosity
+tau = (3. * nulb + 0.5) # relaxation parameter
 cylinder = True
 
+# D2Q9 Lattice constants
 # e_i gives the directions of all 9 velocity vectors.
 # opp gives the indices that correspond to the index of e_i containing the opposite velocity vector
 e_i = np.zeros((q, 2), dtype=np.int64)
@@ -33,10 +35,10 @@ e_i[8] = [ 1, -1];      opp[8] = 6
 w_i = np.array([4 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 36, 1 / 36, 1 / 36, 1 / 36])
 
 
-
-
+## Functions: ##
+# Equilibrium distribution function.
 @jit
-def equilibrium(rho, max_x, max_y, directions, velo_x, velo_y, c):  # Equilibrium distribution function.
+def equilibrium(rho, max_x, max_y, directions, velo_x, velo_y, c):
     feq = np.zeros((max_x, max_y, directions))
     uc = np.zeros((max_x, max_y, directions))
     for i in range(directions):
@@ -50,6 +52,7 @@ def equilibrium(rho, max_x, max_y, directions, velo_x, velo_y, c):  # Equilibriu
 
     return feq
 
+# Create a boundary mask
 def set_boundary(max_x, max_y, obst_x, obst_y, obst_r, cylinder):
     b = np.zeros((max_x, max_y))
     if cylinder:
@@ -60,6 +63,7 @@ def set_boundary(max_x, max_y, obst_x, obst_y, obst_r, cylinder):
     b[:, -1] = True
     return b == 1
 
+# Initial condition
 def poiseuille_flow_channel(max_x, max_y, u_max):
     uy = np.zeros((max_x, max_y))
     ux = np.zeros((max_x, max_y))
@@ -88,6 +92,7 @@ rho = np.ones((nx, ny))
 f_i = equilibrium(rho, nx, ny, q, ux, uy, e_i)
 f_eq = np.copy(f_i)
 
+## Main loop ##
 for t in range(maxIter):
     # Right side boundary condition to make sure the flow doesn't go backwards
     f_i[ -1, :, [3, 6, 7]] = f_i[ -2, :, [3, 6, 7]]
